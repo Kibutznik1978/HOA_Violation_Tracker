@@ -1,0 +1,47 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users collection - only authenticated users can read their own data
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      // Super admins can read all user documents
+      allow read: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'super_admin';
+    }
+    
+    // HOAs collection
+    match /hoas/{hoaId} {
+      // Anyone can read HOA basic info (for public violation forms)
+      allow read: if true;
+      
+      // Only super admins can write to HOAs
+      allow write: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'super_admin';
+      
+      // HOA admins can update their own HOA
+      allow update: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.hoaId == hoaId &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'hoa_admin';
+    }
+    
+    // Violations collection
+    match /violations/{violationId} {
+      // Anyone can create violations (public submission)
+      allow create: if true;
+      
+      // HOA admins can read/update violations for their HOA
+      allow read, update, delete: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.hoaId == resource.data.hoaId &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'hoa_admin';
+      
+      // Super admins can read/update all violations
+      allow read, update, delete: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'super_admin';
+    }
+  }
+}

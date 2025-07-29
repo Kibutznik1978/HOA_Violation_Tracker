@@ -118,11 +118,55 @@ REACT_APP_STRIPE_PUBLISHABLE_KEY=pk_test_your_stripe_key
 - Responsive design with mobile-first approach
 - Type-safe throughout with comprehensive TypeScript types
 
+## Deployment Instructions
+
+### Email Configuration (Required for Production)
+1. **Set up Gmail App Password:**
+   ```bash
+   # Configure email credentials
+   firebase functions:config:set email.user="your-email@gmail.com" email.password="your-app-password"
+   ```
+
+2. **Deploy Cloud Functions:**
+   ```bash
+   cd functions
+   npm install
+   cd ..
+   firebase deploy --only functions
+   ```
+
+3. **Deploy Firestore Rules:**
+   ```bash
+   firebase deploy --only firestore:rules
+   ```
+
+4. **Deploy to Hosting:**
+   ```bash
+   npm run build
+   firebase deploy --only hosting
+   ```
+
+### Complete Deployment
+```bash
+# Deploy everything at once
+firebase deploy
+```
+
+## Production Checklist
+
+- ✅ Firebase project configured with Authentication, Firestore, Storage
+- ✅ Environment variables set (.env)
+- ✅ Firebase Security Rules created
+- ✅ Cloud Functions for email notifications ready
+- ⚠️ Email credentials need to be configured
+- ⚠️ Stripe webhooks need to be set up
+- ⚠️ Domain configuration for production URLs
+
 ## Next Steps for Production
 
-1. Deploy Firebase Cloud Functions for email notifications
-2. Set up Stripe webhooks for payment processing
-3. Configure Firebase Security Rules
-4. Set up proper error monitoring
+1. Configure email credentials for Cloud Functions
+2. Set up Stripe webhooks for payment processing  
+3. Configure custom domain and SSL
+4. Set up proper error monitoring (Sentry)
 5. Add comprehensive testing suite
 6. Configure CI/CD pipeline

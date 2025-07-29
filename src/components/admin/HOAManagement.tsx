@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, onSnapshot, addDoc, updateDoc, doc, deleteDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { HOA } from '../../types';
 import { Button } from '../ui/button';
@@ -19,11 +19,12 @@ const HOAManagement: React.FC = () => {
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const hoasData: HOA[] = [];
       querySnapshot.forEach((doc) => {
+        const data = doc.data();
         hoasData.push({
           id: doc.id,
-          ...doc.data(),
-          createdAt: doc.data().createdAt.toDate(),
-          updatedAt: doc.data().updatedAt.toDate(),
+          ...data,
+          createdAt: data.createdAt ? data.createdAt.toDate() : new Date(),
+          updatedAt: data.updatedAt ? data.updatedAt.toDate() : new Date(),
         } as HOA);
       });
       setHoas(hoasData);
@@ -33,16 +34,22 @@ const HOAManagement: React.FC = () => {
     return () => unsubscribe();
   }, []);
 
-  const handleAddHoa = async (hoaData: Omit<HOA, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleAddHoa = async (hoaData: Omit<HOA, 'createdAt' | 'updatedAt'>) => {
     try {
-      await addDoc(collection(db, 'hoas'), {
+      // Use setDoc with custom ID instead of addDoc
+      await setDoc(doc(db, 'hoas', hoaData.id), {
         ...hoaData,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
       setShowAddForm(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding HOA:', error);
+      if (error.code === 'already-exists') {
+        alert('A HOA with this URL already exists. Please choose a different URL slug.');
+      } else {
+        alert('Error creating HOA. Please try again.');
+      }
     }
   };
 
@@ -94,7 +101,10 @@ const HOAManagement: React.FC = () => {
             {editingHoa?.id === hoa.id ? (
               <HOAForm
                 hoa={editingHoa}
-                onSubmit={(data) => handleUpdateHoa(hoa.id, data)}
+                onSubmit={(data) => {
+                  const { id, ...updateData } = data;
+                  handleUpdateHoa(hoa.id, updateData);
+                }}
                 onCancel={() => setEditingHoa(null)}
               />
             ) : (
@@ -104,6 +114,11 @@ const HOAManagement: React.FC = () => {
                     <h3 className="text-lg font-semibold">{hoa.name}</h3>
                     <p className="text-sm text-muted-foreground">{hoa.address}</p>
                     <p className="text-sm text-muted-foreground">Admin: {hoa.adminEmail}</p>
+                    <p className="text-sm font-medium text-primary">
+                      URL: <a href={`/${hoa.id}`} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                        {window.location.origin}/{hoa.id}
+                      </a>
+                    </p>
                   </div>
                   <div className="flex items-center space-x-2">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -126,6 +141,13 @@ const HOAManagement: React.FC = () => {
                 </div>
 
                 <div className="flex space-x-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => navigator.clipboard.writeText(`${window.location.origin}/${hoa.id}`)}
+                  >
+                    Copy URL
+                  </Button>
                   <Button 
                     variant="outline" 
                     size="sm"
@@ -152,13 +174,14 @@ const HOAManagement: React.FC = () => {
 
 interface HOAFormProps {
   hoa?: HOA;
-  onSubmit: (data: Omit<HOA, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  onSubmit: (data: Omit<HOA, 'createdAt' | 'updatedAt'>) => void;
   onCancel: () => void;
 }
 
 const HOAForm: React.FC<HOAFormProps> = ({ hoa, onSubmit, onCancel }) => {
   const [formData, setFormData] = useState({
     name: hoa?.name || '',
+    urlSlug: hoa?.id || '',
     address: hoa?.address || '',
     adminEmail: hoa?.adminEmail || '',
     additionalEmails: hoa?.additionalEmails.join(', ') || '',
@@ -166,9 +189,35 @@ const HOAForm: React.FC<HOAFormProps> = ({ hoa, onSubmit, onCancel }) => {
     violationTypes: hoa?.violationTypes.join(', ') || 'Parking Violation, Landscaping/Maintenance, Noise Complaint, Pet Violation, Architectural Violation, Trash/Recycling, Pool/Amenity Rules, Other',
   });
 
+  // Generate URL slug from name
+  const generateSlug = (name: string) => {
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/-+/g, '-') // Replace multiple hyphens with single
+      .replace(/^-|-$/g, ''); // Remove leading/trailing hyphens
+  };
+
+  // Auto-generate slug when name changes (for new HOAs only)
+  const handleNameChange = (name: string) => {
+    setFormData({ 
+      ...formData, 
+      name,
+      urlSlug: !hoa ? generateSlug(name) : formData.urlSlug // Only auto-generate for new HOAs
+    });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!formData.urlSlug.trim()) {
+      alert('URL slug is required');
+      return;
+    }
+    
     onSubmit({
+      id: formData.urlSlug,
       name: formData.name,
       address: formData.address,
       adminEmail: formData.adminEmail,
@@ -196,9 +245,27 @@ const HOAForm: React.FC<HOAFormProps> = ({ hoa, onSubmit, onCancel }) => {
           <Input
             id="name"
             value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            onChange={(e) => handleNameChange(e.target.value)}
             required
           />
+        </div>
+
+        <div>
+          <Label htmlFor="urlSlug">URL Slug *</Label>
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-muted-foreground">{window.location.origin}/</span>
+            <Input
+              id="urlSlug"
+              value={formData.urlSlug}
+              onChange={(e) => setFormData({ ...formData, urlSlug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
+              placeholder="sunset-gardens"
+              required
+              className="flex-1"
+            />
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            This will be the URL for your HOA's public page. Only lowercase letters, numbers, and hyphens allowed.
+          </p>
         </div>
 
         <div>

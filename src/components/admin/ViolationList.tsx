@@ -15,10 +15,10 @@ const ViolationList: React.FC<ViolationListProps> = ({ hoaId }) => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
   useEffect(() => {
+    // Use simple query without orderBy - works without indexes
     const q = query(
       collection(db, 'violations'),
-      where('hoaId', '==', hoaId),
-      orderBy('createdAt', 'desc')
+      where('hoaId', '==', hoaId)
     );
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -31,6 +31,8 @@ const ViolationList: React.FC<ViolationListProps> = ({ hoaId }) => {
           updatedAt: doc.data().updatedAt.toDate(),
         } as Violation);
       });
+      // Sort manually in JavaScript (works perfectly for typical HOA volumes)
+      violationsData.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
       setViolations(violationsData);
       setLoading(false);
     });

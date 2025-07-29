@@ -9,6 +9,13 @@ export interface EmailNotificationData {
   hoa: HOA;
 }
 
+export interface ResidentEmailData {
+  violation: Violation;
+  recipientEmail: string;
+  subject: string;
+  message: string;
+}
+
 export const sendViolationNotification = async (data: EmailNotificationData) => {
   try {
     const sendNotification = httpsCallable(functions, 'sendViolationNotification');
@@ -16,6 +23,17 @@ export const sendViolationNotification = async (data: EmailNotificationData) => 
     return result.data;
   } catch (error) {
     console.error('Error sending email notification:', error);
+    throw error;
+  }
+};
+
+export const sendViolationNotificationToResident = async (data: ResidentEmailData) => {
+  try {
+    const sendResidentNotification = httpsCallable(functions, 'sendResidentNotification');
+    const result = await sendResidentNotification(data);
+    return result.data;
+  } catch (error) {
+    console.error('Error sending resident email:', error);
     throw error;
   }
 };

@@ -10,15 +10,23 @@ export const useAuth = () => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+      console.log('🔍 Auth - Firebase user changed:', firebaseUser?.uid, firebaseUser?.email);
+      
       if (firebaseUser) {
         try {
+          console.log('🔍 Auth - Looking for user document:', firebaseUser.uid);
           const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+          
           if (userDoc.exists()) {
             const userData = userDoc.data() as Omit<User, 'id'>;
+            console.log('🔍 Auth - User document found:', JSON.stringify(userData, null, 2));
             setUser({ id: firebaseUser.uid, ...userData });
+          } else {
+            console.log('🔍 Auth - No user document found for UID:', firebaseUser.uid);
+            setUser(null);
           }
         } catch (error) {
-          console.error('Error fetching user data:', error);
+          console.error('🔍 Auth - Error fetching user data:', error);
         }
       } else {
         setUser(null);

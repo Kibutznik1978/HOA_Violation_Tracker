@@ -3,8 +3,11 @@ import { Violation } from '../../types';
 import { Button } from '../ui/button';
 import { Select } from '../ui/select';
 import { Textarea } from '../ui/textarea';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
 import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import { sendViolationNotificationToResident } from '../../utils/emailService';
 
 interface ViolationCardProps {
   violation: Violation;
@@ -22,6 +25,12 @@ const statusColors = {
 const ViolationCard: React.FC<ViolationCardProps> = ({ violation, onStatusUpdate, onDelete }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [adminNotes, setAdminNotes] = useState(violation.adminNotes || '');
+  const [showEmailForm, setShowEmailForm] = useState(false);
+  const [emailData, setEmailData] = useState({
+    recipientEmail: '',
+    subject: `Violation Notice - ${violation.type}`,
+    message: `Dear Resident,\n\nA violation has been reported at ${violation.address}.\n\nViolation Type: ${violation.type}\nDescription: ${violation.description}\n\nPlease address this issue promptly.\n\nThank you,\nHOA Management`
+  });
 
   const handleStatusChange = (status: Violation['status']) => {
     onStatusUpdate(violation.id, status);
@@ -36,6 +45,22 @@ const ViolationCard: React.FC<ViolationCardProps> = ({ violation, onStatusUpdate
       setIsEditing(false);
     } catch (error) {
       console.error('Error updating admin notes:', error);
+    }
+  };
+
+  const handleSendEmail = async () => {
+    try {
+      await sendViolationNotificationToResident({
+        violation,
+        recipientEmail: emailData.recipientEmail,
+        subject: emailData.subject,
+        message: emailData.message
+      });
+      setShowEmailForm(false);
+      alert('Email sent successfully!');
+    } catch (error) {
+      console.error('Error sending email:', error);
+      alert('Failed to send email. Please try again.');
     }
   };
 
@@ -131,7 +156,7 @@ const ViolationCard: React.FC<ViolationCardProps> = ({ violation, onStatusUpdate
         )}
       </div>
 
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center mb-4">
         <div className="flex items-center space-x-2">
           <label className="text-sm font-medium">Status:</label>
           <Select
@@ -146,14 +171,72 @@ const ViolationCard: React.FC<ViolationCardProps> = ({ violation, onStatusUpdate
           </Select>
         </div>
         
-        <Button 
-          variant="destructive" 
-          size="sm" 
-          onClick={() => onDelete(violation.id)}
-        >
-          Delete
-        </Button>
+        <div className="flex space-x-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setShowEmailForm(true)}
+          >
+            Send Email
+          </Button>
+          <Button 
+            variant="destructive" 
+            size="sm" 
+            onClick={() => onDelete(violation.id)}
+          >
+            Delete
+          </Button>
+        </div>
       </div>
+
+      {showEmailForm && (
+        <div className="bg-muted p-4 rounded-lg">
+          <h4 className="font-medium mb-4">Send Violation Notice</h4>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="recipientEmail">Recipient Email *</Label>
+              <Input
+                id="recipientEmail"
+                type="email"
+                value={emailData.recipientEmail}
+                onChange={(e) => setEmailData({ ...emailData, recipientEmail: e.target.value })}
+                placeholder="resident@example.com"
+                required
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="subject">Subject *</Label>
+              <Input
+                id="subject"
+                value={emailData.subject}
+                onChange={(e) => setEmailData({ ...emailData, subject: e.target.value })}
+                required
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="message">Message *</Label>
+              <Textarea
+                id="message"
+                value={emailData.message}
+                onChange={(e) => setEmailData({ ...emailData, message: e.target.value })}
+                rows={6}
+                required
+              />
+            </div>
+            
+            <div className="flex space-x-2">
+              <Button onClick={handleSendEmail} disabled={!emailData.recipientEmail || !emailData.subject || !emailData.message}>
+                Send Email
+              </Button>
+              <Button variant="outline" onClick={() => setShowEmailForm(false)}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
