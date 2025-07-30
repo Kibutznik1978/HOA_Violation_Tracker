@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Button } from '../components/ui/button';
+import { ExternalLink } from 'lucide-react';
 import ViolationList from '../components/admin/ViolationList';
 import HOASettings from '../components/admin/HOASettings';
 
@@ -27,9 +28,17 @@ const AdminDashboard: React.FC = () => {
               </p>
             )}
           </div>
-          <Button variant="outline" onClick={logout}>
-            Logout
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" asChild>
+              <Link to={`/${hoaId}`}>
+                <ExternalLink className="w-4 h-4 mr-2" />
+                View Public Page
+              </Link>
+            </Button>
+            <Button variant="outline" onClick={logout}>
+              Logout
+            </Button>
+          </div>
         </header>
 
         {/* Navigation Tabs */}

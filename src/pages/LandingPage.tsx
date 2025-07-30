@@ -19,7 +19,9 @@ const LandingPage: React.FC = () => {
               <a href="#pricing" className="text-gray-600 hover:text-gray-900 transition-colors">Pricing</a>
               <a href="#demo" className="text-gray-600 hover:text-gray-900 transition-colors">Demo</a>
               <Link to="/super-admin/login" className="text-gray-600 hover:text-gray-900 transition-colors">Login</Link>
-              <Button className="bg-blue-600 hover:bg-blue-700">Get Started</Button>
+              <Button className="bg-blue-600 hover:bg-blue-700" asChild>
+                <Link to="/signup">Get Started</Link>
+              </Button>
             </div>
           </div>
         </div>
@@ -44,9 +46,11 @@ const LandingPage: React.FC = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-            <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-lg px-8 py-4">
-              Start Free Trial
-              <ArrowRight className="ml-2 h-5 w-5" />
+            <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-lg px-8 py-4" asChild>
+              <Link to="/signup" className="flex items-center justify-center">
+                Start Free Trial
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
             </Button>
             <Button variant="outline" size="lg" className="text-lg px-8 py-4">
               <Link to="/demo" className="flex items-center">
@@ -231,8 +235,10 @@ const LandingPage: React.FC = () => {
                 ))}
               </ul>
 
-              <Button className="w-full bg-blue-600 hover:bg-blue-700 text-lg py-4">
-                Start 14-Day Free Trial
+              <Button className="w-full bg-blue-600 hover:bg-blue-700 text-lg py-4" asChild>
+                <Link to="/signup" className="flex items-center justify-center">
+                  Start 14-Day Free Trial
+                </Link>
               </Button>
               
               <p className="text-center text-sm text-gray-500 mt-4">
@@ -254,9 +260,11 @@ const LandingPage: React.FC = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-lg px-8 py-4">
-              Get Started Free
-              <ArrowRight className="ml-2 h-5 w-5" />
+            <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-lg px-8 py-4" asChild>
+              <Link to="/signup" className="flex items-center justify-center">
+                Get Started Free
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
             </Button>
             <Button variant="outline" size="lg" className="text-lg px-8 py-4">
               Schedule Demo

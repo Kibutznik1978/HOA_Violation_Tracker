@@ -1,6 +1,8 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
+import OnboardingPage from './pages/OnboardingPage';
+import OnboardingSuccess from './pages/OnboardingSuccess';
 import HomePage from './pages/HomePage';
 import ViolationFormPage from './pages/ViolationFormPage';
 import AdminLoginPage from './pages/AdminLoginPage';
@@ -15,6 +17,8 @@ function App() {
       <div className="App">
         <Routes>
           <Route path="/" element={<LandingPage />} />
+          <Route path="/signup" element={<OnboardingPage />} />
+          <Route path="/onboarding/success" element={<OnboardingSuccess />} />
           <Route path="/super-admin/login" element={<SuperAdminLogin />} />
           <Route path="/super-admin" element={<SuperAdminDashboard />} />
           <Route path="/:hoaId" element={<HomePage />} />

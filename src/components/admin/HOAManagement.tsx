@@ -133,10 +133,10 @@ const HOAManagement: React.FC = () => {
 
                 <div className="mb-4">
                   <p className="text-sm text-muted-foreground">
-                    Additional Emails: {hoa.additionalEmails.join(', ') || 'None'}
+                    Additional Emails: {hoa.additionalEmails?.join(', ') || 'None'}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Violation Types: {hoa.violationTypes.join(', ')}
+                    Violation Types: {hoa.violationTypes?.join(', ') || 'None'}
                   </p>
                 </div>
 
@@ -184,9 +184,9 @@ const HOAForm: React.FC<HOAFormProps> = ({ hoa, onSubmit, onCancel }) => {
     urlSlug: hoa?.id || '',
     address: hoa?.address || '',
     adminEmail: hoa?.adminEmail || '',
-    additionalEmails: hoa?.additionalEmails.join(', ') || '',
+    additionalEmails: hoa?.additionalEmails?.join(', ') || '',
     subscriptionStatus: hoa?.subscriptionStatus || 'pending' as const,
-    violationTypes: hoa?.violationTypes.join(', ') || 'Parking Violation, Landscaping/Maintenance, Noise Complaint, Pet Violation, Architectural Violation, Trash/Recycling, Pool/Amenity Rules, Other',
+    violationTypes: hoa?.violationTypes?.join(', ') || 'Parking Violation, Landscaping/Maintenance, Noise Complaint, Pet Violation, Architectural Violation, Trash/Recycling, Pool/Amenity Rules, Other',
   });
 
   // Generate URL slug from name
